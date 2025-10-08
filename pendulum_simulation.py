@@ -153,7 +153,7 @@ def _animate_pendulum(
     times: np.ndarray,
     angles: np.ndarray,
     params: PendulumParams,
-) -> None:
+) -> "animation.FuncAnimation":
     """Display a 2D animation of the pendulum bob over time."""
 
     if plt is None or animation is None:
@@ -196,7 +196,7 @@ def _animate_pendulum(
     else:
         interval_ms = 20
 
-    animation.FuncAnimation(
+    anim = animation.FuncAnimation(
         fig,
         update,
         init_func=init,
@@ -207,6 +207,8 @@ def _animate_pendulum(
     )
 
     plt.show()
+
+    return anim
 
 
 def _parse_args(args: Iterable[str] | None = None) -> argparse.Namespace:
@@ -248,7 +250,9 @@ def main(argv: Iterable[str] | None = None) -> None:
         _plot_simulation(times, angles)
         return
 
-    _animate_pendulum(times, angles, params)
+    # Store the animation object to prevent it from being garbage-collected
+    anim = _animate_pendulum(times, angles, params)
+    _ = anim  # explicitly keep a live reference until function end
 
     if args.show_plot:
         _plot_simulation(times, angles)
