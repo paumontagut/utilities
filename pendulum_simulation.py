@@ -2,13 +2,15 @@
 
 This module provides utilities to simulate the motion of a simple pendulum
 subject to gravity and (optionally) linear damping.  The integration results can
-be plotted when the module is executed as a script.
+be plotted or visualised with a 2D animation when the module is executed as a
+script.
 """
 
 from __future__ import annotations
 
+import argparse
 from dataclasses import dataclass
-from typing import Tuple
+from typing import Iterable, Tuple
 
 try:
     import numpy as np
@@ -20,8 +22,10 @@ except ModuleNotFoundError as exc:  # pragma: no cover - dependency guard
 
 try:  # pragma: no cover - matplotlib is optional at runtime
     import matplotlib.pyplot as plt
+    from matplotlib import animation
 except ModuleNotFoundError:  # pragma: no cover - handled gracefully at runtime
     plt = None
+    animation = None
 
 
 @dataclass(frozen=True)
@@ -131,31 +135,123 @@ def _plot_simulation(times: np.ndarray, angles: np.ndarray) -> None:
     plt.show()
 
 
-def run_example_simulation() -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+def run_example_simulation() -> Tuple[np.ndarray, np.ndarray, np.ndarray, PendulumParams]:
     """Execute a demonstration simulation with typical parameters."""
 
     params = PendulumParams(length=1.0, gravity=9.81, damping=0.05)
-    return simulate_pendulum(
+    results = simulate_pendulum(
         theta0=np.deg2rad(20.0),
         omega0=0.0,
         total_time=10.0,
         dt=0.01,
         params=params,
     )
+    return (*results, params)
 
 
-def main() -> None:
-    """Run the example simulation and display a plot if possible."""
+def _animate_pendulum(
+    times: np.ndarray,
+    angles: np.ndarray,
+    params: PendulumParams,
+) -> None:
+    """Display a 2D animation of the pendulum bob over time."""
 
-    times, angles, _ = run_example_simulation()
+    if plt is None or animation is None:
+        raise RuntimeError(
+            "matplotlib es necesario para la animación 2D pero no está instalado. "
+            "Instálalo con 'pip install matplotlib'."
+        )
+
+    x_positions = params.length * np.sin(angles)
+    y_positions = -params.length * np.cos(angles)
+
+    fig, ax = plt.subplots(figsize=(6, 6))
+    ax.set_aspect("equal", "box")
+    limit = params.length * 1.2
+    ax.set_xlim(-limit, limit)
+    ax.set_ylim(-limit, limit)
+    ax.set_xlabel("x (m)")
+    ax.set_ylabel("y (m)")
+    ax.set_title("Animación de péndulo simple")
+    ax.grid(True, linestyle="--", linewidth=0.5)
+
+    rod_line, = ax.plot([], [], lw=2, color="tab:blue")
+    bob_marker, = ax.plot([], [], "o", markersize=12, color="tab:orange")
+    time_text = ax.text(0.05, 0.9, "", transform=ax.transAxes)
+
+    def init() -> Tuple:
+        rod_line.set_data([], [])
+        bob_marker.set_data([], [])
+        time_text.set_text("")
+        return rod_line, bob_marker, time_text
+
+    def update(frame: int) -> Tuple:
+        rod_line.set_data([0.0, x_positions[frame]], [0.0, y_positions[frame]])
+        bob_marker.set_data(x_positions[frame], y_positions[frame])
+        time_text.set_text(f"t = {times[frame]:.2f} s")
+        return rod_line, bob_marker, time_text
+
+    if len(times) > 1:
+        interval_ms = max(int(1000 * (times[1] - times[0])), 1)
+    else:
+        interval_ms = 20
+
+    animation.FuncAnimation(
+        fig,
+        update,
+        init_func=init,
+        frames=len(times),
+        interval=interval_ms,
+        blit=True,
+        repeat=False,
+    )
+
+    plt.show()
+
+
+def _parse_args(args: Iterable[str] | None = None) -> argparse.Namespace:
+    """Return command-line arguments for the script interface."""
+
+    parser = argparse.ArgumentParser(
+        description=(
+            "Simula un péndulo simple y muestra una animación 2D. "
+            "Utiliza --show-plot para incluir la gráfica tradicional."
+        )
+    )
+    parser.add_argument(
+        "--show-plot",
+        action="store_true",
+        help="Muestra la gráfica del ángulo vs tiempo además de la animación.",
+    )
+    parsed_args = list(args) if args is not None else None
+    return parser.parse_args(parsed_args)
+
+
+def main(argv: Iterable[str] | None = None) -> None:
+    """Run the example simulation and display an animation if possible."""
+
+    args = _parse_args(argv)
+    times, angles, _, params = run_example_simulation()
 
     if plt is None:
         print(
-            "Simulation complete. Install matplotlib to view a plot of the results."
+            "Simulación completada. Instala matplotlib para ver la animación 2D "
+            "o la gráfica de resultados."
         )
         return
 
-    _plot_simulation(times, angles)
+    if animation is None:
+        print(
+            "matplotlib está disponible pero su módulo de animación no pudo "
+            "importarse. Mostrando solo la gráfica tradicional."
+        )
+        _plot_simulation(times, angles)
+        return
+
+    _animate_pendulum(times, angles, params)
+
+    if args.show_plot:
+        _plot_simulation(times, angles)
 
 
 if __name__ == "__main__":

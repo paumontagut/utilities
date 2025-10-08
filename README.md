@@ -21,4 +21,5 @@ Algunos scripts pueden requerir dependencias.
   para calcular la evolución temporal de un péndulo simple bajo la influencia de
   la gravedad y un término opcional de amortiguamiento. Al ejecutarlo como
   script, genera una simulación de ejemplo y, si `matplotlib` está instalado,
-  muestra una gráfica del ángulo con respecto al tiempo.
+  presenta una animación 2D del péndulo (usa `--show-plot` para incluir la
+  gráfica tradicional del ángulo frente al tiempo).
