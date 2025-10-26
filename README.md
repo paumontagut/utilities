@@ -10,8 +10,16 @@ Aquí encontrarás scripts para:
 - ✅ **Sistemas** – Monitoreo, gestión y optimización.  
 - ✅ **Otros** – Todo lo que pueda ser útil en el día a día.  
 
-## 🛠️ Uso  
-Cada script incluirá una breve documentación sobre su funcionamiento y requisitos.  
+## 🛠️ Uso
+Cada script incluirá una breve documentación sobre su funcionamiento y requisitos.
 
-### 🔧 Instalación  
-Algunos scripts pueden requerir dependencias. 
+### 🔧 Instalación
+Algunos scripts pueden requerir dependencias.
+
+### 🌌 Simulación de péndulo
+- `pendulum_simulation.py`: implementa un integrador de Runge-Kutta de cuarto orden
+  para calcular la evolución temporal de un péndulo simple bajo la influencia de
+  la gravedad y un término opcional de amortiguamiento. Al ejecutarlo como
+  script, genera una simulación de ejemplo y, si `matplotlib` está instalado,
+  presenta una animación 2D del péndulo (usa `--show-plot` para incluir la
+  gráfica tradicional del ángulo frente al tiempo).
